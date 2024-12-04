@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        #repository {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .commit-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .commit {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #555;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ddd;
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s, border-color 0.3s;
+        }
+
+        .commit:hover {
+            transform: scale(1.1);
+            background-color: #ccc;
+        }
+
+        .commit.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #388E3C;
+        }
+
+        .label {
+            width: 80px;
+            height: 30px;
+            background-color: #3111e7;
+            color: white;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            margin-top: 10px;
+            position: absolute;
+            visibility: hidden;
+        }
+
+        .label.head {
+            background-color: #f44336;
+            bottom: -40px;
+        }
+
+        .label.master {
+            bottom: -80px;
+        }
+
+        .label.visible {
+            visibility: visible;
+        }
+
+        #status {
+            margin: 20px 0;
+            font-size: 1.2rem;
+            color: #555555;
+        }
+
+        #controls {
+            margin-top: 20px;
+        }
+
+        #command {
+            width: calc(100% - 160px);
+            max-width: 500px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #388E3C;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Git Simulator</h1>
+        <div id="repository"></div>
+        <div id="status">
+           <br><br><br><br>
+        </div>
+        <div id="controls">
+            <input type="text" id="command" placeholder="Enter Git command">
+            <button id="run-command">Run</button>
+        </div>
+    </div>
+    <script>
+        const repository = document.getElementById('repository');
+        const branchDisplay = document.getElementById('branch');
+        const headDisplay = document.getElementById('head');
+        const commandInput = document.getElementById('command');
+        const runButton = document.getElementById('run-command');
+
+        let commits = [];
+        let currentBranch = 'master';
+        let currentHead = null;
+
+        function generateCommitId() {
+            return Math.random().toString(36).substring(2, 9);
+        }
+
+        function renderRepository() {
+            repository.innerHTML = '';
+            commits.forEach((commitId, index) => {
+                const commitContainer = document.createElement('div');
+                commitContainer.className = 'commit-container';
+
+                const commitElement = document.createElement('div');
+                commitElement.className = 'commit';
+                commitElement.textContent = commitId;
+
+                const headLabel = document.createElement('div');
+                headLabel.className = 'label head';
+                headLabel.textContent = 'HEAD';
+
+                const masterLabel = document.createElement('div');
+                masterLabel.className = 'label master';
+                masterLabel.textContent = 'master';
+
+                // Set visibility for HEAD
+                if (commitId === currentHead) {
+                    commitElement.classList.add('active');
+                    headLabel.classList.add('visible');
+                }
+
+                // Set visibility for master
+                if (index === commits.length - 1) {
+                    masterLabel.classList.add('visible');
+                }
+
+                commitContainer.appendChild(commitElement);
+                commitContainer.appendChild(masterLabel);
+                commitContainer.appendChild(headLabel);
+                repository.appendChild(commitContainer);
+            });
+        }
+
+        function updateUI() {
+            renderRepository();
+            headDisplay.textContent = currentHead || 'None';
+            branchDisplay.textContent = currentBranch;
+        }
+
+        runButton.addEventListener('click', () => {
+            const command = commandInput.value.trim();
+            const commandParts = command.split(' ');
+
+            if (commandParts[0] === 'git') {
+                if (commandParts[1] === 'commit') {
+                    const newCommit = generateCommitId();
+                    commits.push(newCommit);
+                    currentHead = newCommit;
+                    currentBranch = 'master';
+                    updateUI();
+                } else if (commandParts[1] === 'checkout') {
+                    const target = commandParts[2];
+                    if (target === 'master') {
+                        if (commits.length > 0) {
+                            currentHead = commits[commits.length - 1];
+                        }
+                        currentBranch = 'master';
+                        updateUI();
+                    } else if (commits.includes(target)) {
+                        currentHead = target;
+                        currentBranch = 'DETACHED HEAD';
+                        updateUI();
+                    } else {
+                        alert('Invalid commit ID.');
+                    }
+                } else {
+                    alert('Unknown Git command.');
+                }
+            } else {
+                alert('Unknown command.');
+            }
+
+            commandInput.value = '';
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>
